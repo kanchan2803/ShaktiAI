@@ -44,4 +44,32 @@ all connections done
 - install axios and react router dom
 - setup in env vite_baseURL
 - make services folder / create axios config file in it
+- the authcontext handles all the storage thing directly login , sinup logout fnxn 
+
+# backend
+## setting up basic chatbot
+
+### utils/chatbotclient.js
+setup model amd invoke response 
+
+
+### routes/chatbotroutes.js
+
+
+### controller/chatbotcontroller.js
+the main req,res async fnxn wittry catch that takes in user message
+
+# frontend 
+## services/chatAPi
+the fnxn that sends the message to bot 
+an async fnxn with trycatch
+makes a post request to chatbot and retur the result.reply 
+
+## component/Chatbot
+create handle send fnxn 
+
+## page/home
+render the chatbot component here
+
+## routes/chatRoute
 
