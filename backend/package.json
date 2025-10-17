@@ -1,0 +1,33 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js"
+  },
+  "author": "Kanchan",
+  "license": "ISC",
+  "keywords": [],
+  "description": "",
+  "dependencies": {
+    "@huggingface/inference": "^4.11.1",
+    "@langchain/core": "^0.3.78",
+    "@langchain/groq": "^0.2.4",
+    "axios": "^1.12.2",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "franc-min": "^6.2.0",
+    "joi": "^18.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "langchain": "^0.3.35",
+    "mongoose": "^8.19.0",
+    "nodemon": "^3.1.10"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10"
+  }
+}
