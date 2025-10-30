@@ -22,7 +22,7 @@ export const AuthProvider = ({ children }) => {
         const { data } = await API.post('/auth/signup', userData);
         localStorage.setItem('userInfo', JSON.stringify(data));
         localStorage.setItem('user', JSON.stringify(data.user)); 
-        setUser(data);
+        setUser(data.user);
         console.log("signup succssful");
         return data; // Return data to be used in the component if needed
     };
@@ -32,8 +32,8 @@ export const AuthProvider = ({ children }) => {
         const { data } = await API.post('/auth/login', credentials);
         localStorage.setItem('userInfo', JSON.stringify(data));
         localStorage.setItem('user', JSON.stringify(data.user)); 
-        setUser(data);
-        console.log("Login Succeful, USER:",data);
+        setUser(data.user);
+        console.log("Login Succeful, USER:",data.user);
         return data;
     };
 

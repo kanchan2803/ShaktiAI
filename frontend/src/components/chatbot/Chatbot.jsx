@@ -1,14 +1,52 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { sendMessageToBot } from "../../services/chatApi";
+import { fetchChatMessages, sendMessageToBot } from "../../services/chatApi";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
+import { useNavigate, useParams } from "react-router-dom";
+import Loader from "../layouts/Loader";
 
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [chatId, setChatId] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isPageLoading, setIsPageLoading] = useState(false);
   const { user } = useAuth();
+
   const { transcript, listening, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
+
+  const { chatId: urlChatId } = useParams();
+  const navigate = useNavigate();
+
+  useEffect(()=> {
+    const loadChat = async(id)=> {
+      setIsPageLoading(true);
+      const chat = await fetchChatMessages(id);
+      if(chat){
+        setMessages(chat.messages.map(msg =>({
+            role: msg.role,
+            content: msg.content
+        })));
+        setChatId(chat._id);
+      }
+      else{
+        setMessages([{ role: 'model', content: "Sorry, I couldn't find that chat." }]);
+            setChatId(null);
+      }
+      setIsPageLoading(false);
+    };
+
+    if(urlChatId){
+      loadChat(urlChatId);
+    }
+    else{
+      setMessages([]);
+      setChatId(null);
+      setIsLoading(false);
+      setIsPageLoading(false);
+    }
+  }, [urlChatId]);
 
   if (!browserSupportsSpeechRecognition) {
     return <p>Your browser does not support speech recognition.</p>;
@@ -18,16 +56,29 @@ const Chatbot = () => {
     const message = input.trim() || transcript.trim();
     if (!message) return;
 
-    const userMsg = { sender: "user", text: message };
+    const userMsg = { role: "user", content: message };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     resetTranscript();
+    setIsLoading(true);
 
-    const botReply = await sendMessageToBot(message);
-    const botMsg = { sender: "bot", text: botReply };
+    const {reply: botReply, chatId : newChatId} = await sendMessageToBot(message, chatId);
+    const botMsg = { role: "model", content: botReply };
 
     setMessages((prev) => [...prev, botMsg]);
+    
+    if (newChatId) {
+        setChatId(newChatId);
+        if(!chatId){
+          navigate(`/chat/${newChatId}`);
+        }
+    }
+    setIsLoading(false);
   };
+
+  if(isPageLoading){
+    return <Loader />;
+  }
 
   return (
     <div className="chat-container" style={styles.container}>
@@ -37,14 +88,19 @@ const Chatbot = () => {
             key={index}
             style={{
               ...styles.message,
-              alignSelf: msg.sender === "user" ? "flex-end" : "flex-start",
-              backgroundColor: msg.sender === "user" ? "#007bff" : "#e5e5ea",
-              color: msg.sender === "user" ? "white" : "black",
+              alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
+              backgroundColor: msg.role === "user" ? "#007bff" : "#e5e5ea",
+              color: msg.role === "user" ? "white" : "black",
             }}
           >
-            {msg.text}
+            {msg.content}
           </div>
         ))}
+        {isLoading && (
+          <div style={{...styles.message, alignSelf: 'flex-start', backgroundColor: '#e5e5ea', color: 'black'}}>
+            ...
+          </div>
+        )}
       </div>
 
       <div style={styles.inputBox}>
@@ -55,6 +111,7 @@ const Chatbot = () => {
           value={input || transcript}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e)=>e.key === 'Enter' && handleSend()}
+          disabled={isLoading}
         />
         <button
           style={{
@@ -66,11 +123,12 @@ const Chatbot = () => {
               ? SpeechRecognition.stopListening()
               : SpeechRecognition.startListening({ continuous: true, language: "en-IN" })
           }
+          disabled={isLoading}
         >
           {listening ? "🛑 Stop" : "🎙️ Speak"}
         </button>
 
-        <button style={styles.button} onClick={handleSend}>
+        <button style={styles.button} onClick={handleSend} disabled={isLoading}>
           Send
         </button>
 

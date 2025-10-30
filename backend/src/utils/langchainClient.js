@@ -1,8 +1,9 @@
 import { ChatGroq } from "@langchain/groq";
-import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { ChatPromptTemplate , MessagesPlaceholder} from "@langchain/core/prompts";
 import { getCache, setCache } from "./cache.js";
 import { translateIndicToEnglish, translateEnglishToIndic } from "./translate.js";
 import { detectLanguage } from "./detectLang.js";
+import { HumanMessage,AIMessage } from "@langchain/core/messages";
 
 //model => prompt => chain(pipe) => invoke fro response =>(then go for routes)
 
@@ -44,7 +45,7 @@ Example tone:
 🤖 Shakti.ai: "I'm really sorry you're facing this. You deserve to be safe. You can call the Women Helpline 181 or I can explain how to file a complaint safely."
 `;
 
-export const getChatbotResponse = async (userMessage) => {
+export const getChatbotResponse = async (userMessage, history = []) => {
   const lang = detectLanguage(userMessage);
 
   const messageinEng = 
@@ -61,13 +62,23 @@ export const getChatbotResponse = async (userMessage) => {
   // ChatPromptTemplate with system + user message
   const prompt = ChatPromptTemplate.fromMessages([
     ["system", systemPrompt],
+    new MessagesPlaceholder("chat_history"),
     ["user", "{userMessage}"],
   ]);
 
   // const chain = prompt.pipe(model).pipe(parser);
   const chain = prompt.pipe(model);
 
+  const chat_history = history.map(msg => {
+        if (msg.role === 'user') {
+            return new HumanMessage(msg.content);
+        } else {
+            return new AIMessage(msg.content);
+        }
+    });
+
   const response = await chain.invoke({ 
+    chat_history: chat_history,
     userMessage : messageinEng
   });
 

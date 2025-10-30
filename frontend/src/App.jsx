@@ -5,6 +5,8 @@ import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import Home from './pages/Home'
 import Navbar from './components/layouts/Navbar'
+import ProtectedRoute from './components/ProtectedRoute'
+import HistoryPage from './pages/History'
 
 function App() {
 
@@ -12,9 +14,15 @@ function App() {
     <>
       <Navbar />
       <Routes>
-        <Route path='/' element= { <Home />} />
+        {/* public routes */}
         <Route path='/login' element= {<LoginPage/>} />
         <Route path='/signup' element= {<SignupPage />} />
+        {/* private routes */}
+        <Route element = {<ProtectedRoute />}>
+          <Route path='/' element= { <Home />} />
+          <Route path='/history' element = { <HistoryPage />} />
+          <Route path='/chat/:chatId' element = { <Home />} />
+        </Route>
       </Routes>
     </>
   )

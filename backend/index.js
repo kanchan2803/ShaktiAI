@@ -11,6 +11,10 @@ const PORT = process.env.PORT || 5000
 
 connectDB();
 
+const corsOptions = {
+  origin: process.env.LOCAL_FRONTEND_URL,
+  credentials: true
+}
 // Middlewares
 app.use(cors()); // Enable Cross-Origin Resource Sharing
 app.use(express.json()); // To parse JSON bodies in requests
