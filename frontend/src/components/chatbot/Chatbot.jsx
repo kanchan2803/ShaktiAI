@@ -1,13 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { fetchChatMessages, sendMessageToBot } from "../../services/chatApi";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
 import { useNavigate, useParams } from "react-router-dom";
 import Loader from "../layouts/Loader";
-
+import { Send, Mic, Loader2, Bot, User } from "lucide-react";
 
 const Chatbot = () => {
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState([
+    { sender: "bot", text: "👋 Hi! I'm Shakti AI — your legal companion. How can I assist you today?" },
+  ]);
   const [input, setInput] = useState("");
   const [chatId, setChatId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -15,6 +17,12 @@ const Chatbot = () => {
   const { user } = useAuth();
 
   const { transcript, listening, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
+
+  const chatEndRef = useRef(null);
+
+  useEffect(() => {
+  chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const { chatId: urlChatId } = useParams();
   const navigate = useNavigate();
@@ -81,113 +89,82 @@ const Chatbot = () => {
   }
 
   return (
-    <div className="chat-container" style={styles.container}>
-      <div className="chat-box" style={styles.chatBox}>
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-pink-100 to-purple-200 flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-2xl bg-white/70 backdrop-blur-md rounded-2xl shadow-xl p-6">
+        <h1 className="text-3xl font-bold text-center text-indigo-700 mb-4">
+          💬 Shakti AI Legal Chatbot
+        </h1>
+        <div className="h-[400px] overflow-y-auto p-3 bg-white rounded-xl shadow-inner space-y-3">
         {messages.map((msg, index) => (
           <div
             key={index}
-            style={{
-              ...styles.message,
-              alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
-              backgroundColor: msg.role === "user" ? "#007bff" : "#e5e5ea",
-              color: msg.role === "user" ? "white" : "black",
-            }}
+            className={`flex items-start ${
+                msg.sender === "user" ? "justify-end" : "justify-start"
+              }`}  
           >
+            {msg.sender === "bot" && (
+                <Bot className="w-6 h-6 text-indigo-600 mt-1 mr-2" />
+              )}
+              <div
+                className={`p-3 rounded-2xl max-w-[75%] ${
+                  msg.sender === "user"
+                    ? "bg-indigo-600 text-white rounded-br-none"
+                    : "bg-gray-100 text-gray-800 rounded-bl-none"
+                }`}
+              >
             {msg.content}
-          </div>
+            </div>
+              {msg.sender === "user" && (
+                <User className="w-6 h-6 text-indigo-600 mt-1 ml-2" />
+              )}
+            </div>
         ))}
+        <div ref={chatEndRef} />
+
         {isLoading && (
-          <div style={{...styles.message, alignSelf: 'flex-start', backgroundColor: '#e5e5ea', color: 'black'}}>
-            ...
+          <div className="flex justify-start items-center text-gray-500">
+            <Loader2 className="animate-spin w-5 h-5 mr-2" />
+            Typing...
           </div>
         )}
       </div>
 
-      <div style={styles.inputBox}>
+      <div className="flex mt-4 space-x-2">
         <input
           type="text"
-          placeholder="Type a message..."
-          style={styles.input}
+          placeholder="Type a message or speak..."
           value={input || transcript}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e)=>e.key === 'Enter' && handleSend()}
+          className="flex-1 p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-indigo-400"
           disabled={isLoading}
         />
         <button
-          style={{
-            ...styles.button,
-            backgroundColor: listening ? "#dc3545" : "#28a745",
-          }}
           onClick={() =>
             listening
               ? SpeechRecognition.stopListening()
               : SpeechRecognition.startListening({ continuous: true, language: "en-IN" })
           }
+          className={`${
+              listening ? "bg-pink-500" : "bg-green-500"
+            } hover:opacity-90 text-white p-3 rounded-xl transition`}
           disabled={isLoading}
         >
           {listening ? "🛑 Stop" : "🎙️ Speak"}
+          <Mic size={20} />
         </button>
 
-        <button style={styles.button} onClick={handleSend} disabled={isLoading}>
-          Send
+        <button 
+        className="bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-xl transition"
+        onClick={handleSend} 
+        disabled={isLoading}>
+          <Send size={20} />
         </button>
 
       </div>
     </div>
+    </div>
   );
-};
-
-const styles = {
-  container: {
-    width: "100%",
-    height: "100vh",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#f7f8fa",
-  },
-  chatBox: {
-    width: "90%",
-    maxWidth: "600px",
-    height: "70vh",
-    backgroundColor: "#fff",
-    borderRadius: "10px",
-    padding: "10px",
-    display: "flex",
-    flexDirection: "column",
-    overflowY: "auto",
-    boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-  },
-  message: {
-    margin: "8px",
-    padding: "10px 15px",
-    borderRadius: "20px",
-    maxWidth: "80%",
-    wordWrap: "break-word",
-  },
-  inputBox: {
-    width: "90%",
-    maxWidth: "600px",
-    marginTop: "10px",
-    display: "flex",
-    gap: "10px",
-  },
-  input: {
-    flex: 1,
-    padding: "10px",
-    borderRadius: "20px",
-    border: "1px solid #ccc",
-    outline: "none",
-  },
-  button: {
-    padding: "10px 20px",
-    borderRadius: "20px",
-    border: "none",
-    backgroundColor: "#007bff",
-    color: "white",
-    cursor: "pointer",
-  },
 };
 
 export default Chatbot;
