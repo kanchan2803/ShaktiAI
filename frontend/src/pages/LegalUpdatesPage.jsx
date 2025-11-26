@@ -1,357 +1,285 @@
-// LegalUpdatesPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import TypingHeader from "../components/news/TypingHeader";
-import SearchBar from "../components/news/SearchBar";
-import FilterChips from "../components/news/FilterChips";
+import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  Plus, Moon, Sun, Search, TrendingUp, BookOpen, 
+  Filter, ChevronRight, Bookmark 
+} from "lucide-react";
 import NewsCard from "../components/news/NewsCard";
+import NewsModal from "../components/news/NewsModal";
 import LoadingShimmer from "../components/news/LoadingShimmer";
 import EmptyState from "../components/news/EmptyState";
-import NewsModal from "../components/news/NewsModal";
+import FilterChips from "../components/news/FilterChips";
 import HelplinesFooter from "../components/helplines/HelplinesFooter";
 import { sampleNews } from "../data/sampleNews";
 import { useLocalStorage } from "../services/useLocalStorage";
-import { Plus, Moon, Sun } from "lucide-react";
-import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
 
-/**
- * LegalUpdatesPage
- * Frontend-only. Uses sampleNews as default. Filter, search, bookmark localStorage.
- */
 export default function LegalUpdatesPage() {
   const [data, setData] = useState(null);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");
-  const [selected, setSelected] = useState(null); // for modal
-  const [bookmarks, setBookmarks] = useLocalStorage("bookmarks", {}); // store id->true
+  const [selected, setSelected] = useState(null);
+  const [bookmarks, setBookmarks] = useLocalStorage("bookmarks", {});
   const [dark, setDark] = useLocalStorage("ui_dark", false);
+  const [localUpdates] = useLocalStorage("local_news_updates", []);
 
-  // simulate load
+  // Simulate data fetch
   useEffect(() => {
     setData(null);
-    const t = setTimeout(() => setData(sampleNews), 600); // small delay for shimmer
+    const t = setTimeout(() => {
+      const combinedData = [...(localUpdates || []), ...sampleNews];
+      setData(combinedData);
+    }, 600);
     return () => clearTimeout(t);
-  }, []);
+  }, [localUpdates]);
 
-  // categories
+  // Extract Categories
   const categories = useMemo(() => {
     const set = new Set(["All"]);
     (sampleNews || []).forEach((n) => set.add(n.category || "Uncategorized"));
     return Array.from(set);
   }, []);
 
-  // filter + search (client-side)
+  // Filtering Logic
   const filtered = useMemo(() => {
     if (!data) return [];
     const q = query.trim().toLowerCase();
     return data.filter((n) => {
       const matchesQ =
         !q ||
-        (n.title || "").toLowerCase().includes(q) ||
-        (n.summary || "").toLowerCase().includes(q) ||
-        (n.content || "").toLowerCase().includes(q) ||
-        (n.tags || "").toLowerCase().includes(q);
-      const matchesCat = category === "All" || (n.category || "") === category;
+        n.title?.toLowerCase().includes(q) ||
+        n.summary?.toLowerCase().includes(q);
+      const matchesCat = category === "All" || n.category === category;
       return matchesQ && matchesCat;
     });
   }, [data, query, category]);
 
-  function toggleBookmark(id) {
+  // Featured Item (First item of the filtered list, or first of all)
+  const featuredItem = filtered.length > 0 ? filtered[0] : null;
+  const listItems = filtered.length > 0 ? filtered.slice(1) : [];
+
+  const toggleBookmark = (id) => {
     setBookmarks((prev) => {
-      const copy = { ...(prev || {}) };
+      const copy = { ...prev };
       if (copy[id]) delete copy[id];
       else copy[id] = true;
       return copy;
     });
-  }
+  };
 
-  // keyboard shortcut to toggle dark
+  // Dark Mode Toggle
   useEffect(() => {
     if (dark) document.documentElement.classList.add("dark");
     else document.documentElement.classList.remove("dark");
   }, [dark]);
 
   return (
-    <div
-      className={`min-h-screen transition-colors duration-300 ${
-        dark
-          ? "bg-slate-900 text-slate-100"
-          : "bg-gradient-to-b from-blue-50 to-white text-slate-900"
-      }`}
-    >
-      {/* --- Hero Section (same as Helpline gradient) --- */}
-      <header className="relative overflow-hidden">
-        <div className="bg-gradient-to-r from-[#1E3A8A] to-[#60A5FA] text-white py-16">
-          <div className="max-w-7xl mx-auto px-6 md:px-12">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                <div className="max-w-2xl">
-                  <h1 className="text-3xl md:text-4xl font-extrabold leading-tight">
-                    Latest <span className="text-yellow-300">Legal Updates ⚖️</span>
-                  </h1>
-                  <p className="mt-4 text-lg text-blue-100">
-                    Laws • Court Rulings • Women’s Rights • Digital Safety • Government Policies
-                  </p>
-                </div>
+    <div className={`min-h-screen transition-colors duration-300 ${dark ? "bg-slate-900 text-slate-100" : "bg-slate-50 text-slate-900"}`}>
+      
+      {/* --- HERO HEADER --- */}
+      <div className="relative bg-gradient-to-r from-blue-900 via-indigo-900 to-purple-900 text-white pb-32 pt-12 overflow-hidden">
+        {/* Background Effects */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500 rounded-full mix-blend-overlay filter blur-[100px] opacity-20 animate-blob"/>
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-400 rounded-full mix-blend-overlay filter blur-[80px] opacity-20 animate-blob animation-delay-2000"/>
 
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setDark((d) => !d)}
-                    className="p-2 rounded-lg border border-white/30 bg-white/10 backdrop-blur-md hover:scale-105 transition"
-                    aria-label="Toggle theme"
-                  >
-                    {dark ? <Sun size={18} /> : <Moon size={18} />}
-                  </button>
-
-                  <Link to="/add-update" title="Add update (admin)">
-                    <motion.button
-                      whileTap={{ scale: 0.95 }}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-lg hover:shadow-yellow-200/40"
-                    >
-                      <Plus size={16} /> Add Update
-                    </motion.button>
-                  </Link>
-                </div>
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-medium text-blue-100 mb-4 backdrop-blur-md">
+                <TrendingUp size={14} className="text-yellow-400" />
+                <span>Verified Legal & Government Updates</span>
               </div>
+              <h1 className="text-4xl md:text-5xl font-extrabold leading-tight tracking-tight">
+                Legal <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-400">News & Rights</span>
+              </h1>
+              <p className="mt-4 text-lg text-blue-100/80 max-w-2xl">
+                Stay empowered with the latest court rulings, government policies, and amendments simplified for you.
+              </p>
             </motion.div>
+
+            <div className="flex items-center gap-3">
+               <button
+                  onClick={() => setDark(!dark)}
+                  className="p-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-md transition-all"
+                >
+                  {dark ? <Sun size={20} /> : <Moon size={20} />}
+               </button>
+               <Link to="/add-update" className="flex items-center gap-2 px-5 py-3 rounded-full bg-white text-indigo-900 font-bold hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95">
+                  <Plus size={18} /> <span className="hidden sm:inline">Add Update</span>
+               </Link>
+            </div>
           </div>
         </div>
-      </header>
+      </div>
 
-      {/* --- Main Content --- */}
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Left column */}
-          <div className="lg:col-span-3">
-            <div className="mb-6">
-              <SearchBar
-                query={query}
-                setQuery={setQuery}
-                placeholder="Search updates, acts, judgments..."
-              />
-            </div>
+      {/* --- MAIN CONTENT CONTAINER --- */}
+      <div className="max-w-7xl mx-auto px-6 -mt-20 relative z-20 pb-20">
+        
+        {/* Search Bar (Floating) */}
+        <motion.div 
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-2 flex items-center gap-2 border border-slate-100 dark:border-slate-700 mb-10"
+        >
+          <div className="p-3 text-slate-400">
+            <Search size={22} />
+          </div>
+          <input 
+            type="text" 
+            placeholder="Search for laws, acts, or keywords..." 
+            className="flex-1 bg-transparent outline-none text-lg text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <div className="hidden md:flex items-center gap-2 pr-2">
+            <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
+            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Filter:</span>
+            <select 
+              value={category} 
+              onChange={(e) => setCategory(e.target.value)}
+              className="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm rounded-lg px-3 py-2 outline-none border-none cursor-pointer hover:bg-slate-200 transition"
+            >
+              {categories.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+        </motion.div>
 
-            <div className="mb-6">
-              <FilterChips
-                categories={categories}
-                selected={category}
-                onSelect={setCategory}
-              />
-            </div>
-
-            {/* Content */}
-            {!data && <LoadingShimmer />}
-
-            {data && filtered.length === 0 && <EmptyState query={query} />}
-
-            {data && filtered.length > 0 && (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-2 gap-6">
-                {filtered.map((item, idx) => (
-                  <NewsCard
-                    key={item.id || idx}
-                    item={item}
-                    onOpen={() => setSelected(item)}
-                    bookmarked={!!bookmarks[item.id]}
-                    onToggleBookmark={() => toggleBookmark(item.id)}
-                  />
-                ))}
-              </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* LEFT CONTENT (News Grid) */}
+          <div className="lg:col-span-8 space-y-8">
+            
+            {/* Featured Article */}
+            {!data ? <LoadingShimmer /> : featuredItem && (
+               <motion.div 
+                 initial={{ opacity: 0, scale: 0.98 }}
+                 animate={{ opacity: 1, scale: 1 }}
+                 onClick={() => setSelected(featuredItem)}
+                 className="group relative bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-lg border border-slate-100 dark:border-slate-700 cursor-pointer hover:shadow-2xl transition-all duration-300"
+               >
+                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent z-10"/>
+                 {/* Fallback pattern or image */}
+                 <div className={`h-64 w-full bg-gradient-to-br ${featuredItem.image_url ? '' : 'from-blue-600 to-purple-600'} bg-cover bg-center`}
+                      style={{ backgroundImage: featuredItem.image_url ? `url(${featuredItem.image_url})` : undefined }}>
+                 </div>
+                 
+                 <div className="absolute bottom-0 left-0 right-0 p-6 z-20 text-white">
+                    <span className="inline-block px-3 py-1 rounded-full bg-blue-500/20 backdrop-blur-md border border-white/20 text-xs font-semibold mb-3">
+                      Featured • {featuredItem.category}
+                    </span>
+                    <h2 className="text-2xl md:text-3xl font-bold mb-2 group-hover:text-blue-200 transition-colors">
+                      {featuredItem.title}
+                    </h2>
+                    <p className="text-slate-200 text-sm md:text-base line-clamp-2 mb-4">
+                      {featuredItem.summary}
+                    </p>
+                    <div className="flex items-center gap-2 text-xs font-medium text-slate-300">
+                      <span>{new Date(featuredItem.published_at).toDateString()}</span>
+                      <span>•</span>
+                      <span className="flex items-center gap-1">Read Full Update <ChevronRight size={14}/></span>
+                    </div>
+                 </div>
+               </motion.div>
             )}
+
+            {/* List Grid */}
+            <div className="grid md:grid-cols-2 gap-6">
+               {listItems.length > 0 ? (
+                 listItems.map((item) => (
+                   <NewsCard 
+                     key={item.id} 
+                     item={item} 
+                     onOpen={() => setSelected(item)}
+                     bookmarked={!!bookmarks[item.id]}
+                     onToggleBookmark={() => toggleBookmark(item.id)}
+                   />
+                 ))
+               ) : (
+                 data && <div className="col-span-2"><EmptyState query={query}/></div>
+               )}
+            </div>
           </div>
 
-          {/* Sidebar */}
-          <aside className="hidden lg:block lg:col-span-1 sticky top-24 self-start">
-            <div className="p-5 rounded-2xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-md border border-gray-200 dark:border-slate-700 shadow-lg dark:shadow-white/10">
-              <h4 className="text-sm font-semibold mb-3 text-slate-800 dark:text-slate-100">
-                Quick Filters
-              </h4>
-              <div className="flex flex-col gap-2">
-                <button
-                  onClick={() => setCategory("All")}
-                  className="text-sm text-left w-full px-3 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-slate-700 transition"
-                >
-                  All
-                </button>
-                {categories.slice(1).slice(0, 8).map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setCategory(c)}
-                    className="text-sm text-left w-full px-3 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-slate-700 transition"
-                  >
-                    {c}
-                  </button>
-                ))}
-              </div>
+          {/* RIGHT SIDEBAR (Sticky) */}
+          <aside className="lg:col-span-4 space-y-6">
+            
+            {/* Categories Widget */}
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 sticky top-24">
+               <h3 className="font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+                 <Filter size={18} className="text-indigo-500"/> Filter by Category
+               </h3>
+               <div className="flex flex-wrap gap-2">
+                 {categories.map(cat => (
+                   <button
+                     key={cat}
+                     onClick={() => setCategory(cat)}
+                     className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all border ${
+                       category === cat 
+                         ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 border-indigo-200 dark:border-indigo-700" 
+                         : "bg-slate-50 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 border-transparent hover:bg-slate-100"
+                     }`}
+                   >
+                     {cat}
+                   </button>
+                 ))}
+               </div>
+            </div>
 
-              <div className="mt-5 border-t border-gray-200 dark:border-slate-600 pt-4 text-sm text-slate-700 dark:text-slate-300">
-                <strong>Bookmarks</strong>
-                <div className="mt-2">
-                  {Object.keys(bookmarks || {}).length === 0 ? (
-                    <div className="text-xs text-slate-400">
-                      No bookmarks yet
-                    </div>
-                  ) : (
-                    Object.keys(bookmarks).map((id) => {
-                      const it = (sampleNews || []).find((s) => s.id === id);
-                      if (!it) return null;
-                      return (
-                        <div key={id} className="text-xs py-1">
-                          • {it.title.slice(0, 40)}...
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
+            {/* Bookmarks Widget */}
+            <div className="bg-gradient-to-br from-indigo-50 to-white dark:from-slate-800 dark:to-slate-900 rounded-2xl p-6 shadow-sm border border-indigo-100 dark:border-slate-700">
+              <h3 className="font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+                <Bookmark size={18} className="text-pink-500"/> Your Bookmarks
+              </h3>
+              <div className="space-y-3">
+                {Object.keys(bookmarks).length === 0 ? (
+                  <p className="text-sm text-slate-400 italic">No bookmarks yet.</p>
+                ) : (
+                  Object.keys(bookmarks).map(id => {
+                     const item = sampleNews.find(n => n.id === id);
+                     if(!item) return null;
+                     return (
+                       <div key={id} onClick={() => setSelected(item)} className="cursor-pointer group">
+                          <h4 className="text-sm font-medium text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 transition-colors line-clamp-1">
+                            {item.title}
+                          </h4>
+                          <p className="text-xs text-slate-400">{new Date(item.published_at).toLocaleDateString()}</p>
+                       </div>
+                     )
+                  })
+                )}
               </div>
             </div>
 
-            <div className="mt-6 p-5 rounded-2xl bg-gradient-to-b from-blue-50 to-white/60 dark:from-slate-800 dark:to-slate-900 border border-gray-100 dark:border-slate-700 shadow-md">
-              <h5 className="font-semibold mb-3 text-slate-800 dark:text-slate-100">
-                Glossary (preview)
-              </h5>
-              <ul className="text-sm text-slate-700 dark:text-slate-300 space-y-1">
-                <li>
-                  <strong>Amendment:</strong> Change to existing law.
-                </li>
-                <li>
-                  <strong>Judgment:</strong> Court ruling on a case.
-                </li>
-                <li>
-                  <strong>Petition:</strong> A submitted legal request.
-                </li>
-              </ul>
+            {/* Glossary Widget */}
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
+               <h3 className="font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+                 <BookOpen size={18} className="text-emerald-500"/> Legal Glossary
+               </h3>
+               <ul className="space-y-3 text-sm">
+                 <li className="flex gap-2">
+                   <span className="font-semibold text-slate-700 dark:text-slate-300">FIR:</span>
+                   <span className="text-slate-500">First Information Report filed by police.</span>
+                 </li>
+                 <li className="flex gap-2">
+                   <span className="font-semibold text-slate-700 dark:text-slate-300">Bail:</span>
+                   <span className="text-slate-500">Temporary release of an accused person.</span>
+                 </li>
+                 <li className="flex gap-2">
+                   <span className="font-semibold text-slate-700 dark:text-slate-300">Affidavit:</span>
+                   <span className="text-slate-500">A written statement confirmed by oath.</span>
+                 </li>
+               </ul>
             </div>
+            
           </aside>
         </div>
       </div>
 
-      {selected && (
-        <NewsModal item={selected} onClose={() => setSelected(null)} />
-      )}
+      {/* Modal */}
+      {selected && <NewsModal item={selected} onClose={() => setSelected(null)} />}
+      
       <HelplinesFooter />
     </div>
   );
 }
-
-
-
-
-// previous code fetching GAC- GOOGLE SHEET
-// // frontend/src/pages/LegalUpdatesPage.jsx
-// import React, { useEffect, useMemo, useState } from "react";
-// import { fetchNews } from "../api/gasApi";
-// import TypingHeader from "../components/news/TypingHeader";
-// import SearchBar from "../components/news/SearchBar";
-// import NewsCard from "../components/news/NewsCard";
-// import LoadingShimmer from "../components/news/LoadingShimmer";
-// import AddUpdateModal from "../components/news/AddUpdateModal";
-
-// // You can comment FilterChips if not ready
-// // import FilterChips from "../components/news/FilterChips";
-
-// export default function LegalUpdatesPage() {
-//   const [news, setNews] = useState(null);
-//   const [query, setQuery] = useState("");
-//   const [category, setCategory] = useState("All");
-//   const [showAdd, setShowAdd] = useState(false);
-
-//   async function load() {
-//     setNews(null);
-//     try {
-//       const data = await fetchNews();
-//       console.log("Fetched data:", data);
-//       setNews(data);
-//     } catch (e) {
-//       console.error("Error fetching data:", e);
-//       setNews([]);
-//     }
-//   }
-
-//   useEffect(() => {
-//     load();
-//   }, []);
-
-//   const categories = useMemo(() => {
-//     const set = new Set(["All"]);
-//     (news || []).forEach((n) => set.add(n.category || "Uncategorized"));
-//     return Array.from(set);
-//   }, [news]);
-
-//   const filtered = useMemo(() => {
-//     if (!news) return [];
-//     const q = query.trim().toLowerCase();
-//     return news.filter((n) => {
-//       const matchesQ =
-//         !q ||
-//         (n.title || "").toLowerCase().includes(q) ||
-//         (n.summary || "").toLowerCase().includes(q) ||
-//         (n.content || "").toLowerCase().includes(q) ||
-//         (n.tags || "").toLowerCase().includes(q);
-//       const matchesCat = category === "All" || (n.category || "") === category;
-//       return matchesQ && matchesCat;
-//     });
-//   }, [news, query, category]);
-
-//   return (
-//     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
-//       <div className="max-w-6xl mx-auto relative z-10">
-//         {/* Header + Button */}
-//         <div className="flex items-center justify-between mb-6">
-//           <TypingHeader text="Verified Legal & Government Updates (Curated)" />
-//           <button
-//             onClick={() => setShowAdd(true)}
-//             className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow hover:scale-105 transition-transform"
-//           >
-//             Add Update
-//           </button>
-//         </div>
-
-//         {/* Search */}
-//         <SearchBar
-//           query={query}
-//           setQuery={setQuery}
-//           placeholder="Search updates, acts, judgments..."
-//         />
-
-//         {/* Categories (optional if you have FilterChips ready) */}
-//         {/* <div className="mt-6">
-//           <FilterChips
-//             categories={categories}
-//             selected={category}
-//             onSelect={setCategory}
-//           />
-//         </div> */}
-
-//         {/* Content */}
-//         {!news && <LoadingShimmer />}
-
-//         {news && filtered.length === 0 && (
-//           <div className="text-center py-16 text-gray-500">
-//             No updates found yet.
-//           </div>
-//         )}
-
-//         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-//           {filtered.map((item) => (
-//             <NewsCard key={item.id || item.title} item={item} />
-//           ))}
-//         </div>
-//       </div>
-
-//       {/* Modal */}
-//       {showAdd && (
-//         <AddUpdateModal
-//           onClose={() => setShowAdd(false)}
-//           onSaved={() => {
-//             setShowAdd(false);
-//             load();
-//           }}
-//         />
-//       )}
-//     </div>
-//   );
-// }

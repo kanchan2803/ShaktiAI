@@ -7,7 +7,6 @@ import Bot from './pages/Bot'
 import Navbar from './components/layouts/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
 import HistoryPage from './pages/History'
-import About from './pages/About'
 import HelplineNumbers from './pages/HelplineNumbers'
 import LegalUpdatesPage from './pages/LegalUpdatesPage'
 import AddUpdatePage from './pages/AddUpdatePage'
@@ -24,7 +23,6 @@ function App() {
         {/* public routes */}
         <Route path='/login' element= {<LoginPage/>} />
         <Route path='/signup' element= {<SignupPage />} />
-        <Route path="/about" element={<About />} />
         <Route path="/helplines" element={<HelplineNumbers />} />
         <Route path="/legal-updates" element={<LegalUpdatesPage />} />
         <Route path="/HomePage" element={<HomePage />} />

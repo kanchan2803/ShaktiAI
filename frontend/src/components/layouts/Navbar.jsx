@@ -63,18 +63,6 @@ export default function Navbar() {
             <span>ShaktiBot</span>
           </NavLink>
 
-          <NavLink 
-            to="/about" 
-            className={({ isActive }) =>
-              `${desktopLinkClasses} flex items-center gap-1.5 transition-all duration-300 ${
-                isActive
-                  ? "text-blue-700 font-semibold border-b-2 border-blue-500"
-                  : "text-white hover:text-blue-400"
-              }`}>
-                <Info className="w-4 h-4" />
-            <span>About</span>
-            </NavLink>
-
           <NavLink
             to="/history"
             className={({ isActive }) =>
@@ -172,7 +160,6 @@ export default function Navbar() {
                 {/* --- Mobile-only Navigation Links --- */}
                 <div className="md:hidden border-b border-gray-700 mb-2 pb-2">
                   <NavLink to="/" end className={mobileLinkClasses} onClick={() => setMenuOpen(false)}>Home</NavLink>
-                  <NavLink to="/about" className={mobileLinkClasses} onClick={() => setMenuOpen(false)}>About</NavLink>
                   <NavLink to="/history" className={mobileLinkClasses} onClick={() => setMenuOpen(false)}>History</NavLink>
                 </div>
 
@@ -204,7 +191,6 @@ export default function Navbar() {
                 Home
               </NavLink>
                   <NavLink to="/" end className={mobileLinkClasses} onClick={() => setMenuOpen(false)}>ShaktiBot</NavLink>
-                  <NavLink to="/about" className={mobileLinkClasses} onClick={() => setMenuOpen(false)}>About</NavLink>
                   <NavLink to="/history" className={mobileLinkClasses} onClick={() => setMenuOpen(false)}>History</NavLink>
                   <NavLink to="/helplines" className={mobileLinkClasses} onClick={() => setMenuOpen(false)}>
                 Helpline Numbers

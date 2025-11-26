@@ -26,16 +26,24 @@ export const signup = async (req,res) => {
             password: hashedPassword
         }); 
         await newUser.save();
+        
+        const token = jwt.sign(
+            { email: newUser.email, _id: newUser._id },
+            process.env.JWT_SECRET,
+            { expiresIn: "24h" } 
+        );
 
         //5.
         console.log("Signup Succesful , User:",newUser);
+
+
         res.status(201)
             .json({
                 message:"SignUp Succesful",
                 success: true,
-                user: newUser
+                user: newUser,
+                token
             })
-
 
     } catch (error) {
        console.log("Signup failed, error", error);
@@ -68,7 +76,7 @@ export const login = async (req,res)=>{
         const token = jwt.sign(
             { email: user.email, _id:user._id},
             process.env.JWT_SECRET, 
-            { expiresIn: "1h"},
+            { expiresIn: "24h"},
         )
 
         console.log("Login successful from controller");
