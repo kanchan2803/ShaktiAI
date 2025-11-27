@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { fetchAllNews } from "../services/newsApi"; 
+import { sampleNews } from "../data/sampleNews";
 import { 
   Plus, Moon, Sun, Search, TrendingUp, BookOpen, 
   Filter, ChevronRight, Bookmark 
@@ -11,7 +13,6 @@ import LoadingShimmer from "../components/news/LoadingShimmer";
 import EmptyState from "../components/news/EmptyState";
 import FilterChips from "../components/news/FilterChips";
 import HelplinesFooter from "../components/helplines/HelplinesFooter";
-import { sampleNews } from "../data/sampleNews";
 import { useLocalStorage } from "../services/useLocalStorage";
 
 export default function LegalUpdatesPage() {
@@ -25,13 +26,22 @@ export default function LegalUpdatesPage() {
 
   // Simulate data fetch
   useEffect(() => {
-    setData(null);
-    const t = setTimeout(() => {
-      const combinedData = [...(localUpdates || []), ...sampleNews];
-      setData(combinedData);
-    }, 600);
-    return () => clearTimeout(t);
-  }, [localUpdates]);
+    const loadNews = async () => {
+      setData(null); // Show loading shimmer
+      try {
+
+        const globalNews = await fetchAllNews();
+        
+        const combined = [...globalNews, ...sampleNews]; 
+        
+        setData(combined);
+      } catch (err) {
+        console.error("Failed to load news", err);
+        setData(sampleNews); 
+      }
+    };
+    loadNews();
+  }, []); 
 
   // Extract Categories
   const categories = useMemo(() => {

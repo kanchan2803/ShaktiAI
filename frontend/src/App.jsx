@@ -11,7 +11,6 @@ import HelplineNumbers from './pages/HelplineNumbers'
 import LegalUpdatesPage from './pages/LegalUpdatesPage'
 import AddUpdatePage from './pages/AddUpdatePage'
 import HomePage from './pages/HomePage'
-import DraftsDocs from './pages/DraftsDocs'
 import SafeSpaceLocator from './pages/SafeSpaceLocator'
 
 function App() {
@@ -33,7 +32,6 @@ function App() {
           <Route path='/chat/:chatId' element = { <Bot />} />
           <Route path="/add-update" element={<AddUpdatePage />} />
           <Route path="/safe-space-locator" element={<SafeSpaceLocator />} />
-          <Route path="/drafts" element={<DraftsDocs />} />
         </Route>
       </Routes>
     </>

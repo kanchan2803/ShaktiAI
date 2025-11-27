@@ -117,21 +117,7 @@ export default function Navbar() {
           >
             <MapPin className="w-4 h-4" />
             <span>Safe-Space Locator</span>
-          </NavLink>
-
-          <NavLink
-            to="/drafts"
-            className={({ isActive }) =>
-              `${desktopLinkClasses} flex items-center gap-1.5 transition-all duration-300 ${
-                isActive
-                  ? "text-blue-700 font-semibold border-b-2 border-blue-500"
-                  : "text-white hover:text-blue-400"
-              }`
-            }
-          >
-            <FileText className="w-4 h-4" />
-            <span>Drafts / Docs</span>
-          </NavLink>  
+          </NavLink> 
 
         </div>
 

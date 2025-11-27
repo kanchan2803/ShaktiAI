@@ -101,4 +101,4 @@ export default function NewsCard({ item, onOpen, bookmarked, onToggleBookmark })
       </div>
     </motion.article>
   );
-}
+}11111
