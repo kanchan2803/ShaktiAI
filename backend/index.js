@@ -11,10 +11,12 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 5000   
 
-connectDB().then(async () => {
-  // This runs in the background to check/upload PDFs
-  await initializeKnowledgeBase();
-});
+connectDB();
+
+// 2. Initialize RAG (Vector Data) - Runs in background
+initializeKnowledgeBase().then(() => {
+  console.log("⚙️  RAG System Initialized");
+}).catch(err => console.log("RAG Init Warning:", err.message));
 
 initializeKnowledgeBase().then(() => {
     console.log("⚙️  RAG System Initialized");
