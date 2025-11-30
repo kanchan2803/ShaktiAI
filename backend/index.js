@@ -5,12 +5,20 @@ import connectDB from './src/config/db.js'
 import authRoutes from './src/routes/authRouter.js'
 import chatBotRoutes from './src/routes/chatbotRouter.js'
 import newsRouter from './src/routes/newsRouter.js';
+import { initializeKnowledgeBase } from './src/utils/ragSetup.js';
 
 dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 5000   
 
-connectDB();
+connectDB().then(async () => {
+  // This runs in the background to check/upload PDFs
+  await initializeKnowledgeBase();
+});
+
+initializeKnowledgeBase().then(() => {
+    console.log("⚙️  RAG System Initialized");
+});
 
 const corsOptions = {
   origin: process.env.LOCAL_FRONTEND_URL,

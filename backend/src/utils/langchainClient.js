@@ -1,9 +1,33 @@
 import { ChatGroq } from "@langchain/groq";
 import { ChatPromptTemplate , MessagesPlaceholder} from "@langchain/core/prompts";
-import { getCache, setCache } from "./cache.js";
+import { SystemMessage,HumanMessage,AIMessage } from "@langchain/core/messages";
+import { createAgent } from "langchain";
+import { tool } from "@langchain/core/tools";
+import { z } from "zod";
+
 import { translateIndicToEnglish, translateEnglishToIndic } from "./translate.js";
 import { detectLanguage } from "./detectLang.js";
-import { HumanMessage,AIMessage } from "@langchain/core/messages";
+import { vectorStore } from "./ragSetup.js";
+
+// 1. Define the Retrieval Tool
+// This tool allows the AI to search your MongoDB vector store
+const legalSearchTool = tool(
+  async ({ query }) => {
+    try {
+      const retrievedDocs = await vectorStore.similaritySearch(query, 3); // Get top 3 results
+      return retrievedDocs
+        .map(doc => `Source: ${doc.metadata.source}\nContent: ${doc.pageContent}`)
+        .join("\n\n");
+    } catch (e) {
+      return "Error searching legal database.";
+    }
+  },
+  {
+    name: "retrieve_legal_info",
+    description: "Search for Indian laws, acts, and legal procedures in the knowledge base.",
+    schema: z.object({ query: z.string().describe("The search query for legal info") }),
+  }
+);
 
 //model => prompt => chain(pipe) => invoke fro response =>(then go for routes)
 
@@ -43,9 +67,16 @@ You specialize in:
 Example tone:
 👩‍🦰 User: "My husband hits me sometimes."
 🤖 Shakti.ai: "I'm really sorry you're facing this. You deserve to be safe. You can call the Women Helpline 181 or I can explain how to file a complaint safely."
+
+### ROLE
+  - Use the 'retrieve_legal_info' tool to find specific laws (BNS, Domestic Violence Act, etc.) when the user asks legal questions.
+  - If you find information using the tool, Cite the specific Act/Section.
+  - Simplify complex legal terms into plain, easy-to-understand language.
+  - Be empathetic and supportive.
 `;
 
 export const getChatbotResponse = async (userMessage, history = []) => {
+  try {
   const lang = detectLanguage(userMessage);
 
   const messageinEng = 
@@ -58,34 +89,63 @@ export const getChatbotResponse = async (userMessage, history = []) => {
       apiKey: process.env.GROQ_API_KEY,
       model: "llama-3.3-70b-versatile",  
     });
-
-  // ChatPromptTemplate with system + user message
-  const prompt = ChatPromptTemplate.fromMessages([
-    ["system", systemPrompt],
-    new MessagesPlaceholder("chat_history"),
-    ["user", "{userMessage}"],
-  ]);
-
-  // const chain = prompt.pipe(model).pipe(parser);
-  const chain = prompt.pipe(model);
-
-  const chat_history = history.map(msg => {
-        if (msg.role === 'user') {
-            return new HumanMessage(msg.content);
-        } else {
-            return new AIMessage(msg.content);
-        }
+    // C. Create Agent (The New v1 Way)
+    const agent = createAgent({
+      model,
+      tools: [legalSearchTool],
+      systemPrompt,
     });
 
-  const response = await chain.invoke({ 
-    chat_history: chat_history,
-    userMessage : messageinEng
-  });
+    // D. Convert History to LangChain Format
+    const chatHistory = history.map(msg => 
+      msg.role === 'user' ? new HumanMessage(msg.content) : new AIMessage(msg.content)
+    );
 
-  const finalReply =
-    lang === "en"
-      ? response.content
-      : await translateEnglishToIndic(response.content, lang);
+    // E. Run Agent
+    // We pass the history + new message
+    const result = await agent.invoke({
+      messages: [...chatHistory, new HumanMessage(messageinEng)],
+    });
+
+    // The result in v1 createAgent is the last message content
+    const botResponseEnglish = result.messages[result.messages.length - 1].content;
+
+    // F. Translate Back
+    const finalReply = lang === "en"
+      ? botResponseEnglish
+      : await translateEnglishToIndic(botResponseEnglish, lang);
+
+  // // ChatPromptTemplate with system + user message
+  // const prompt = ChatPromptTemplate.fromMessages([
+  //   ["system", systemPrompt],
+  //   new MessagesPlaceholder("chat_history"),
+  //   ["user", "{userMessage}"],
+  // ]);
+
+  // // const chain = prompt.pipe(model).pipe(parser);
+  // const chain = prompt.pipe(model);
+
+  // const chat_history = history.map(msg => {
+  //       if (msg.role === 'user') {
+  //           return new HumanMessage(msg.content);
+  //       } else {
+  //           return new AIMessage(msg.content);
+  //       }
+  //   });
+
+  // const response = await chain.invoke({ 
+  //   chat_history: chat_history,
+  //   userMessage : messageinEng
+  // });
+  // const finalReply =
+  //   lang === "en"
+  //     ? finalResponseText
+  //     : await translateEnglishToIndic(finalResponseText, lang);
 
   return finalReply;
+
+  } catch (error) {
+    console.error("Chatbot Logic Error:", error);
+    return "I'm facing a technical issue right now. Please try again later.";
+  }
 };
