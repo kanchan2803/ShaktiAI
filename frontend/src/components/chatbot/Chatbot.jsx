@@ -4,8 +4,17 @@ import { fetchChatMessages, sendMessageToBot } from "../../services/chatApi";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
 import { useNavigate, useParams } from "react-router-dom";
 import Loader from "../layouts/Loader";
-import { Send, Mic, StopCircle, Sparkles, Bot, User, ArrowLeft, RefreshCw } from "lucide-react";
+import { Send, Mic, StopCircle, Sparkles, Bot, User, ArrowLeft, RefreshCw, Shield, Scale } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import ReactMarkdown from "react-markdown";
+
+// Quick starter questions for the user
+const QUICK_PROMPTS = [
+  { text: "File an FIR online", icon: "👮‍♀️" },
+  { text: "Rights against Domestic Violence", icon: "🏠" },
+  { text: "Cyber harassment laws", icon: "💻" },
+  { text: "Maternity leave rules", icon: "bz" },
+];
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([
@@ -62,7 +71,7 @@ const Chatbot = () => {
     else{
       setMessages([{
             role: "model",
-            content: "👋 Namaste! I'm Shakti AI — your legal companion. I'm here to listen and help you navigate your rights and safety. How can I assist you today?",
+            content: "👋 Namaste! I am **Shakti**, your legal friend. \n\nI can help you understand Indian laws, file complaints, or find safety. \n\n**You are safe here.** How can I help you today?",
           }]);
       setChatId(null);
       setIsLoading(false);
@@ -85,8 +94,8 @@ const Chatbot = () => {
     )
   }
 
-  const handleSend = async () => {
-    const message = input.trim() || transcript.trim();
+  const handleSend = async (textOverride = null) => {
+    const message = textOverride || input.trim() || transcript.trim();
     if (!message) return;
 
     const userMsg = { role: "user", content: message };
@@ -113,7 +122,7 @@ const Chatbot = () => {
       const response = await sendMessageToBot(message, chatId);
       
       // 3. Handle Response (Matches your backend: returns { reply, chatId })
-      const botReply = response.reply || "I'm having trouble connecting right now. Please try again.";
+      const botReply = response.reply || "I am currently updating my legal database. Please try again in a moment.";
       const newChatId = response.chatId;
 
       const botMsg = { role: "model", content: botReply };
@@ -122,7 +131,6 @@ const Chatbot = () => {
       // 4. Update URL if this was a new conversation
       if (newChatId && newChatId !== chatId) {
         setChatId(newChatId);
-        // Soft navigation to update URL without reloading
         navigate(`/chat/${newChatId}`, { replace: true });
       }
     } catch (error) {
@@ -141,34 +149,38 @@ const Chatbot = () => {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] bg-gradient-to-br from-rose-50 via-purple-50 to-indigo-50 relative overflow-hidden font-sans">
+    <div className="flex flex-col h-[calc(100vh-64px)] bg-[#F8FAFC] relative overflow-hidden font-sans">
 
-    {/* --- Ambient Background Effects --- */}
-      <div className="absolute top-[-20%] left-[-20%] w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-pink-300/30 rounded-full filter blur-3xl opacity-40 animate-blob" />
-      <div className="absolute top-[-20%] right-[-20%] w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-purple-300/30 rounded-full filter blur-3xl opacity-40 animate-blob animation-delay-2000" />
-      <div className="absolute bottom-[-20%] left-[20%] w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-indigo-300/30 rounded-full filter blur-3xl opacity-40 animate-blob animation-delay-4000" />
+    {/* --- Ambient Background --- */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-200/40 rounded-full blur-3xl opacity-60 animate-blob" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-rose-200/40 rounded-full blur-3xl opacity-60 animate-blob animation-delay-2000" />
+      </div>
 
 
       {/* --- Header --- */}
-      <div className="bg-white/70 backdrop-blur-md border-b border-white/50 px-4 py-3 shadow-sm flex items-center justify-between sticky top-0 z-20">
-        <div className="flex items-center gap-2.5">
+      <div className="bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 shadow-sm flex items-center justify-between sticky top-0 z-20">
+        <div className="flex items-center gap-4">
           {urlChatId && (
             <button 
               onClick={() => navigate('/')} 
-              className="md:hidden p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"
+              className="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-full"
             >
               <ArrowLeft size={20} />
             </button>
           )}
-          <div className="bg-gradient-to-br from-pink-500 to-purple-600 p-2.5 rounded-full shadow-lg shadow-pink-200">
-            <Sparkles className="w-5 h-5 text-white" />
+          <div className="relative">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-violet-600 to-fuchsia-500 p-0.5 shadow-lg">
+              <div className="w-full h-full bg-white rounded-full flex items-center justify-center">
+                <Sparkles className="w-6 h-6 text-violet-600 fill-violet-100" />
+              </div>
+            </div>
+            <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></div>
           </div>
           <div>
-            <h1 className="text-lg font-bold text-gray-800 tracking-tight leading-tight">
-              Shakti AI
-            </h1>
-            <p className="text-xs text-purple-600 font-medium flex items-center gap-1">
-              Your Legal Companion <span className="text-[10px]">🌸</span>
+            <h1 className="text-xl font-bold text-slate-800 tracking-tight">Shakti AI</h1>
+            <p className="text-xs text-slate-500 font-medium flex items-center gap-1">
+              Legal Companion • <span className="text-emerald-600">Online</span>
             </p>
           </div>
         </div>
@@ -183,89 +195,121 @@ const Chatbot = () => {
              setChatId(null);
              navigate('/');
           }}
-          className="p-2 bg-white/80 hover:bg-white rounded-full text-gray-500 hover:text-purple-600 transition shadow-sm border border-transparent hover:border-purple-100"
+          className="p-2.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all"
           title="Start New Chat"
         >
-          <RefreshCw size={18} />
+          <RefreshCw size={20} />
         </button>
       </div>
 
       {/* --- Chat Area --- */ }
-        <div className="flex-1 overflow-y-auto py-4 px-3 md:px-12 md:py-10 space-y-6 scroll-smooth">
-        <AnimatePresence initial={false}>
+        <div className="flex-1 overflow-y-auto py-6 px-4 md:px-20 scroll-smooth z-10 custom-scrollbar">
+        <div className="max-w-4xl mx-auto space-y-6">
+        <AnimatePresence mode="popLayout">
         {messages.map((msg, index) => (
           <motion.div
             key={index}
-            initial={{ opacity: 0, y: 10}}
-              animate={{ opacity: 1, y: 0}}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className={`flex w-full ${
-                msg.role === "user" ? "justify-end" : "justify-start"
-              }`}
-          >
-            <div className={`flex max-w-[78%] md:max-w-[70%] gap-2.5 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.4, type: "spring" }}
+                className={`flex w-full ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+            <div className={`flex max-w-[85%] md:max-w-[75%] gap-3 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
 
               {/* Avatar Icons */}
                 <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm mt-1 border 
                   ${msg.role === "user" 
-                    ? "bg-indigo-100 border-indigo-200" 
-                    : "bg-white border-pink-100"}`}>
+                    ? "bg-pink-600 border-pink-700 text-white" 
+                    : "bg-white border-violet-100 text-violet-600"}`}>
                   {msg.role === "user" ? (
-                    <User size={16} className="text-indigo-600" />
+                    <User size={14} className="text-white" />
                   ) : (
-                    <Bot size={18} className="text-pink-600" />
+                    <Bot size={16} className="text-pink-600" />
                   )}
                 </div>
 
                 {/* Message Bubble */}
                 <div
-                  className={`px-4 py-3 shadow-sm text-[14px] 
-                    md:text-[15px]leading-relaxed relative ${
+                  className={`px-5 py-3.5 shadow-sm text-[14px] 
+                    md:text-[15px]leading-7 relative ${
                     msg.role === "user"
-                      ? "bg-gradient-to-br from-indigo-600 to-purple-700 text-white rounded-2xl rounded-tr-sm"
-                      : "bg-white border border-white/60 text-gray-800 rounded-2xl rounded-tl-sm shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)]"
+                      ? "bg-pink-600 text-white rounded-2xl rounded-tr-none"
+                      : "bg-white border border-slate-100 text-slate-700 rounded-2xl rounded-tl-none shadow-md"
                   }`}
                 >
-                  {msg.content.split('\n').map((line, i) => (
-                    <p key={i} className={`min-h-[1.2em] ${line.trim().startsWith('*') || line.trim().startsWith('-') ? 'ml-2' : ''}`}>
-                        {line}
-                    </p>
-                  ))}
+                  {/* Markdown Renderer for Bot */}
+                    {msg.role === "model" ? (
+                      <div className="markdown-content space-y-2">
+                        <ReactMarkdown 
+                          components={{
+                            strong: ({node, ...props}) => <span className="font-bold text-violet-700" {...props} />,
+                            ul: ({node, ...props}) => <ul className="list-disc pl-4 space-y-1" {...props} />,
+                            li: ({node, ...props}) => <li className="marker:text-violet-400" {...props} />,
+                            a: ({node, ...props}) => <a className="text-blue-600 hover:underline" target="_blank" {...props} />
+                          }}
+                        >
+                          {msg.content}
+                        </ReactMarkdown>
+                      </div>
+                    ) : (
+                      <p>{msg.content}</p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+              </motion.div>
+            ))}
+          </AnimatePresence>
 
         {/* Typing Indicator */}
         {isLoading && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3"
+            className="flex items-center gap-3 ml-1"
           >
-             <div className="w-8 h-8 bg-white border border-pink-100 rounded-full flex items-center justify-center shadow-sm mt-1">
-               <Sparkles size={16} className="text-pink-400 animate-pulse" />
-             </div>
-             <div className="bg-white/90 px-4 py-3 rounded-2xl rounded-tl-sm shadow-sm flex items-center gap-1.5 border border-pink-50">
-               <span className="w-1.5 h-1.5 bg-pink-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-               <span className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-               <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-               <span className="text-xs text-gray-400 ml-2 font-medium">Shakti is thinking...</span>
-             </div>
-          </motion.div>
+             <div className="w-8 h-8 bg-white border border-violet-100 rounded-full flex items-center justify-center shadow-sm">
+                 <Sparkles size={14} className="text-violet-500 animate-spin-slow" />
+               </div>
+             <div className="bg-white/80 px-4 py-3 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm flex gap-1.5">
+                 {[0, 150, 300].map(delay => (
+                   <div key={delay} className="w-1.5 h-1.5 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: `${delay}ms` }} />
+                 ))}
+               </div>
+            </motion.div>
         )}
+
+        {/* Welcome/Empty State Suggestions */}
+          {messages.length <= 1 && !isLoading && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-8 max-w-2xl mx-auto"
+            >
+              {QUICK_PROMPTS.map((prompt, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleSend(prompt.text)}
+                  className="flex items-center gap-3 p-4 bg-white hover:bg-violet-50 border border-slate-100 hover:border-violet-200 rounded-xl shadow-sm hover:shadow-md transition-all text-left group"
+                >
+                  <span className="text-2xl group-hover:scale-110 transition-transform">{prompt.icon}</span>
+                  <span className="text-sm font-medium text-slate-700 group-hover:text-violet-700">{prompt.text}</span>
+                </button>
+              ))}
+            </motion.div>
+          )}
+
         <div ref={chatEndRef} />
+      </div>
       </div>
 
 {/* --- Input Area --- */}
-      <div className="bg-gradient-to-t from-white via-white/95 to-transparent pt-3 pb-5 px-3 z-20 bottom-0">
-        <div className="max-w-3xl mx-auto">
-          <div className="bg-white border border-purple-100 shadow-[0_0_20px_rgba(0,0,0,0.08)] rounded-[2rem] p-1.5 pl-4 flex items-center gap-2 transition-all focus-within:ring-2 focus-within:ring-pink-200 focus-within:border-pink-300">
-            
+      <div className="bg-white/80 backdrop-blur-xl border-t border-slate-200 p-4 pb-6 z-30">
+        <div className="max-w-3xl mx-auto relative">
+          <div className={`flex items-end gap-2 bg-slate-50 border transition-all duration-300 rounded-[24px] p-2 pr-3 shadow-inner ${isLoading ? 'opacity-70 pointer-events-none' : 'border-slate-200 focus-within:border-violet-300 focus-within:ring-4 focus-within:ring-violet-100'}`}>
             
             {/* Input Field */}
-        <input
+        {/* <input
           type="text"
           placeholder={listening ? "Listening..." : "Type a message..."}
           value={input}
@@ -273,7 +317,23 @@ const Chatbot = () => {
           onKeyDown={(e)=>e.key === 'Enter' && handleSend()}
           className="flex-1 bg-transparent border-none outline-none text-gray-700 placeholder-gray-400 text-base"
           disabled={isLoading}
-        />
+        /> */}
+        <textarea
+              rows={1}
+              placeholder={listening ? "Listening... Speak now" : "Ask Shakti anything regarding laws..."}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              className="flex-1 bg-transparent border-none outline-none text-slate-700 placeholder:text-slate-400 text-base px-4 py-3 resize-none max-h-32 scrollbar-hide"
+            />
+
+            {/* Actions */}
+        <div className="flex items-center gap-2 pb-1">
         <button
           onClick={() => {
             if (listening) {
@@ -283,30 +343,38 @@ const Chatbot = () => {
                   SpeechRecognition.startListening({ continuous: true, language: "en-IN" });
                 }
           }}
-          className={`p-3 rounded-full transition-all duration-300 ${
-                listening
-                  ? "bg-red-50 text-red-500 animate-pulse ring-2 ring-red-100"
-                  : "text-gray-400 hover:bg-pink-50 hover:text-pink-500"
-              }`}
+          className={`p-2.5 rounded-full transition-all ${
+                  listening 
+                    ? "bg-red-100 text-red-600 animate-pulse" 
+                    : "hover:bg-slate-200 text-slate-500 hover:text-slate-700"
+                }`}
               title={listening ? "Stop Listening" : "Speak"}
         >
-        {listening ? <StopCircle size={22} /> : <Mic size={22} />}
+        {listening ? <StopCircle size={20} /> : <Mic size={20} />}
         </button>
 
         <button 
-        className="p-3 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full text-white shadow-md shadow-pink-200 
-                hover:shadow-lg hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 transition-all duration-200"
+        className="bg-violet-600 hover:bg-violet-700 text-white rounded-full shadow-lg shadow-violet-200 
+                hover:shadow-lg hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 transition-all transform"
         onClick={handleSend} 
         disabled={isLoading}
         >
-          <Send size={20} className={isLoading ? "opacity-50" : "ml-0.5"} />
+          <Send size={22} fill="currentColor" />
         </button>
         </div>
-<div className="text-center mt-3">
+        </div>
+
+        <div className="text-center mt-3 flex justify-center items-center gap-4 text-[10px] text-slate-400 font-medium uppercase tracking-wide">
+            <span className="flex items-center gap-1"><Shield size={10}/> Private & Confidential</span>
+            <span className="flex items-center gap-1"><Scale size={10}/> AI Legal Guide</span>
+          </div>
+
+          <div className="text-center mt-3">
             <p className="text-[11px] text-gray-400 font-medium">
               🤖 Shakti AI provides guidance, not legal counsel. For emergencies, dial <span className="text-pink-600 font-bold">100</span> or <span className="text-pink-600 font-bold">1091</span>.
             </p>
           </div>
+
         </div>
       </div>
     </div>
