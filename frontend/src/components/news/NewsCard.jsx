@@ -15,7 +15,7 @@ export default function NewsCard({ item, onOpen, bookmarked, onToggleBookmark })
     "Default": "bg-slate-100 text-slate-700"
   };
 
-  const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=800";
+  const FALLBACK_IMAGE = "https://img.freepik.com/free-vector/global-broadcast-breaking-news-banner-with-global-map_1017-59836.jpg?semt=ais_hybrid&w=740&q=80";
 
   const badgeClass = categoryColors[item.category] || categoryColors["Default"];
 

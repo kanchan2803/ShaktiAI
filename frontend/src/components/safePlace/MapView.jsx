@@ -13,14 +13,30 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
-// Component to handle map center updates
-function MapController({ center, zoom }) {
+// Component to handle map center updates and movement events
+function MapController({ center, zoom, onMove }) {
   const map = useMap();
+
+  // Handle flying to new center
   useEffect(() => {
     if (center) {
       map.flyTo([center.lat, center.lng], zoom || 14, { animate: true });
     }
   }, [center, zoom, map]);
+
+  // Handle map movement (panning)
+  useEffect(() => {
+    if (!onMove) return;
+    
+    const handleMoveEnd = () => {
+      const c = map.getCenter();
+      onMove({ lat: c.lat, lng: c.lng });
+    };
+
+    map.on('moveend', handleMoveEnd);
+    return () => map.off('moveend', handleMoveEnd);
+  }, [map, onMove]);
+
   return null;
 }
 
@@ -34,7 +50,7 @@ const createDivIcon = (emoji = "📍", color = "#1e3a8a") =>
   });
 
 const MapView = React.forwardRef(function MapView(
-  { userLocation, query, radius = 8000, filters = {}, onPlacesUpdate, refineMode, onRefineComplete },
+  { userLocation, query, radius = 8000, filters = {}, onPlacesUpdate, refineMode, onRefineComplete, onMapMove },
   ref
 ) {
   const [places, setPlaces] = useState([]);
@@ -52,7 +68,6 @@ const MapView = React.forwardRef(function MapView(
       const { lat, lng } = place.coords;
       map.flyTo([lat, lng], 16, { animate: true });
       
-      // Open popup manually if needed
       setTimeout(() => {
         map.openPopup(
             `<div style="font-weight:bold">${place.name}</div><div style="font-size:12px">${place.category}</div>`, 
@@ -96,9 +111,11 @@ const MapView = React.forwardRef(function MapView(
                 const r = await getRoute(userLocation, p.coords);
                 if (r) {
                     setRoutes(prev => ({ ...prev, [p.id]: r }));
-                    p._route = r; // Mutate for quick access in parent
+                    p._route = r; 
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.error("Route fetching error:", e);
+            }
         });
 
       } catch (err) {
@@ -150,7 +167,6 @@ const MapView = React.forwardRef(function MapView(
       <MapContainer
         center={[20.5937, 78.9629]} // India Default
         zoom={5}
-        // h-full w-full ensures it fits the flex container exactly
         className="h-full w-full outline-none z-0"
         ref={mapInstanceRef}
       >
@@ -159,7 +175,11 @@ const MapView = React.forwardRef(function MapView(
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
         />
         
-        <MapController center={mapCenter} zoom={query ? 16 : 14} />
+        <MapController 
+            center={mapCenter} 
+            zoom={query ? 16 : 14} 
+            onMove={onMapMove} 
+        />
         <LocationMarker />
 
         {/* User Location */}

@@ -5,7 +5,7 @@ import MapView from "../components/safePlace/MapView.jsx";
 import SafePlaceCard from "../components/safePlace/SafePlaceCard.jsx";
 import HelplinesFooter from "../components/helplines/HelplinesFooter.jsx";
 import { reverseGeocode } from "../utils/geocode.js";
-import { Hospital, Shield, HeartHandshake, Home, MapPin, Navigation, List, X, Filter } from "lucide-react";
+import { Hospital, Shield, HeartHandshake, Home, MapPin, Navigation, List, X, Filter, Search, AlertTriangle } from "lucide-react";
 
 export default function SafeSpaceLocator() {
   const [userLocation, setUserLocation] = useState(null);
@@ -19,26 +19,35 @@ export default function SafeSpaceLocator() {
   const [tempRefineCoords, setTempRefineCoords] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   
+  // New States for Improvements
+  const [locationError, setLocationError] = useState(null);
+  const [mapCenter, setMapCenter] = useState(null);
+  
   const mapCompRef = useRef();
 
-  // 1. Get Initial Location
+  // 1. Get Initial Location with better error handling
   useEffect(() => {
     if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser.");
       setUserLocation({ lat: 28.6139, lng: 77.2090 }); // Default Delhi
       return;
     }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
+
+    const success = (pos) => {
         const { latitude, longitude, accuracy } = pos.coords;
         setUserLocation({ lat: latitude, lng: longitude, accuracy });
+        setLocationError(null);
         reverseGeocode(latitude, longitude).then(setAddr).catch(() => {});
-      },
-      (err) => {
+    };
+
+    const error = (err) => {
         console.warn("Geo error:", err);
-        setUserLocation({ lat: 23.2599, lng: 77.4126, accuracy: null }); // Default Bhopal
-      },
-      { enableHighAccuracy: true }
-    );
+        setLocationError("Location access denied or unavailable. Showing default location.");
+        // Only set default if we haven't set a location yet (e.g. from search)
+        setUserLocation(prev => prev || { lat: 23.2599, lng: 77.4126, accuracy: null }); // Default Bhopal
+    };
+
+    navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true, timeout: 10000 });
   }, []);
 
   // 2. Handle Search
@@ -100,6 +109,15 @@ export default function SafeSpaceLocator() {
                 onSelect={handleSearchSelect} 
                 userLocation={userLocation} 
             />
+            {locationError && (
+                <div className="mt-3 bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-xl text-sm flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+                    <div className="flex items-center gap-2">
+                        <AlertTriangle size={16} />
+                        {locationError}
+                    </div>
+                    <button onClick={() => setLocationError(null)} className="text-red-500 font-bold hover:underline">Dismiss</button>
+                </div>
+            )}
          </div>
 
          {/* --- LOCATOR BOX (Fixed Height Container) --- */}
@@ -128,6 +146,22 @@ export default function SafeSpaceLocator() {
                     </button>
                 </div>
 
+                {/* "Search This Area" Button */}
+                {mapCenter && !refineMode && (
+                    <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[400]">
+                        <button 
+                            onClick={() => {
+                                setUserLocation({ lat: mapCenter.lat, lng: mapCenter.lng });
+                                setMapCenter(null);
+                                setLocationError(null);
+                            }}
+                            className="bg-white text-indigo-700 px-4 py-2 rounded-full shadow-lg font-bold text-sm flex items-center gap-2 border border-indigo-100 hover:scale-105 transition active:scale-95"
+                        >
+                            <Search size={14} /> Search This Area
+                        </button>
+                    </div>
+                )}
+
                 {/* Refine Mode Banner */}
                 {refineMode && (
                     <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[400] bg-amber-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium flex gap-3 items-center animate-in slide-in-from-top-2">
@@ -146,6 +180,7 @@ export default function SafeSpaceLocator() {
                     onPlacesUpdate={handlePlacesUpdate}
                     refineMode={refineMode}
                     onRefineComplete={setTempRefineCoords}
+                    onMapMove={setMapCenter}
                 />
 
                 {/* Address Badge Overlay */}
@@ -163,7 +198,6 @@ export default function SafeSpaceLocator() {
             </div>
 
             {/* 3. RIGHT LIST (Scrollable sidebar) */}
-            {/* Logic: Hidden on mobile unless toggled. Always visible on desktop. */}
             <div className={`
                 absolute md:static inset-0 z-50 bg-white md:z-auto
                 w-full md:w-80 lg:w-96 border-l border-slate-200 
@@ -171,18 +205,34 @@ export default function SafeSpaceLocator() {
                 ${sidebarOpen ? "translate-x-0" : "translate-x-full md:translate-x-0"}
             `}>
                 {/* List Header */}
-                <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center shrink-0">
-                    <div>
-                        <h3 className="font-bold text-slate-800">Nearby Safe Spaces</h3>
-                        <p className="text-xs text-slate-500">Within {radius/1000}km radius</p>
+                <div className="p-4 border-b border-slate-100 bg-slate-50 shrink-0">
+                    <div className="flex justify-between items-center mb-3">
+                        <div>
+                            <h3 className="font-bold text-slate-800">Nearby Safe Spaces</h3>
+                            <p className="text-xs text-slate-500">Within {(radius/1000).toFixed(1)}km radius</p>
+                        </div>
+                        <span className="text-xs font-bold bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full border border-indigo-200">
+                            {nearbyPlaces.length}
+                        </span>
+                        <button onClick={() => setSidebarOpen(false)} className="md:hidden p-1 text-slate-400">
+                            <X size={20} />
+                        </button>
                     </div>
-                    <span className="text-xs font-bold bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full border border-indigo-200">
-                        {nearbyPlaces.length}
-                    </span>
-                    {/* Mobile Close Button */}
-                    <button onClick={() => setSidebarOpen(false)} className="md:hidden p-1 text-slate-400">
-                        <X size={20} />
-                    </button>
+
+                    {/* Radius Slider */}
+                    <div className="flex items-center gap-3">
+                        <span className="text-xs text-slate-400 font-medium w-8">1km</span>
+                        <input 
+                            type="range" 
+                            min="1000" 
+                            max="20000" 
+                            step="1000"
+                            value={radius} 
+                            onChange={(e) => setRadius(Number(e.target.value))}
+                            className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                        />
+                        <span className="text-xs text-slate-400 font-medium w-8 text-right">20km</span>
+                    </div>
                 </div>
 
                 {/* List Content (Scrollable) */}
@@ -191,7 +241,7 @@ export default function SafeSpaceLocator() {
                         <div className="flex flex-col items-center justify-center h-full text-slate-400 text-center p-6">
                             <MapPin size={48} className="mb-4 text-slate-200" />
                             <p className="text-sm font-medium text-slate-500">No safe spaces found nearby.</p>
-                            <p className="text-xs mt-1">Try increasing the search radius or moving the map.</p>
+                            <p className="text-xs mt-1">Try increasing the radius or moving the map.</p>
                         </div>
                     ) : (
                         nearbyPlaces.map(place => (
