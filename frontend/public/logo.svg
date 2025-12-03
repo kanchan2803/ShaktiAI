@@ -1,0 +1,31 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sakhi_gradient" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7C3AED" /> <stop offset="1" stop-color="#DB2777" /> </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="#000" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+
+  <path 
+    d="M32 4C18 4 6 14 6 28C6 42 16 56 32 62C48 56 58 42 58 28C58 14 46 4 32 4Z" 
+    fill="url(#sakhi_gradient)" 
+    stroke="white" 
+    stroke-width="1.5"
+  />
+
+  <path 
+    d="M32 16C30.5 16 29 17.5 29 19.5C29 21.5 30.5 23 32 23C33.5 23 35 21.5 35 19.5C35 17.5 33.5 16 32 16ZM32 24C30 24 28 25.5 27 28L25 44H39L37 28C36 25.5 34 24 32 24Z" 
+    fill="white"
+    filter="url(#shadow)"
+  />
+
+  <path d="M18 28H46" stroke="white" stroke-width="1.5" stroke-linecap="round" />
+  
+  <path d="M18 28L14 36C14 38 16 40 18 40C20 40 22 38 22 36L18 28Z" fill="white" fill-opacity="0.9" />
+  <path d="M18 28L14 36 M18 28L22 36" stroke="white" stroke-width="0.5" />
+
+  <path d="M46 28L42 36C42 38 44 40 46 40C48 40 50 38 50 36L46 28Z" fill="white" fill-opacity="0.9" />
+  <path d="M46 28L42 36 M46 28L50 36" stroke="white" stroke-width="0.5" />
+
+</svg>

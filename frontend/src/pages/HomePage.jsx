@@ -94,12 +94,12 @@ const team = [
   {
     name: "KD",
     role: "Founder & Developer",
-    img: "https://api.dicebear.com/7.x/avataaars/svg?seed=KD", // placeholder avatar
+    img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400&h=400", // placeholder avatar
   },
   {
     name: "Project Shakti Team",
     role: "AI & Research",
-    img: "https://api.dicebear.com/7.x/avataaars/svg?seed=Shakti",
+    img: "https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&q=80&w=400&h=400",
   },
 ];
 

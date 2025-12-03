@@ -3,6 +3,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Clock, Bookmark, ExternalLink, ChevronRight } from "lucide-react";
 
+
 export default function NewsCard({ item, onOpen, bookmarked, onToggleBookmark }) {
   const categoryColors = {
     "Laws & Amendments": "bg-blue-100 text-blue-700",
@@ -13,6 +14,8 @@ export default function NewsCard({ item, onOpen, bookmarked, onToggleBookmark })
     "Awareness & Education": "bg-emerald-100 text-emerald-700",
     "Default": "bg-slate-100 text-slate-700"
   };
+
+  const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=800";
 
   const badgeClass = categoryColors[item.category] || categoryColors["Default"];
 
@@ -25,11 +28,11 @@ export default function NewsCard({ item, onOpen, bookmarked, onToggleBookmark })
       className="flex flex-col bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden hover:shadow-xl transition-all duration-300 h-full"
     >
       {/* Optional Image Header */}
-      {item.image_url && (
         <div className="h-40 w-full bg-gray-200 overflow-hidden relative">
           <img 
-            src={item.image_url} 
+            src={item.image_url || FALLBACK_IMAGE} 
             alt={item.title} 
+            onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
             className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
           />
           <div className="absolute top-3 right-3">
@@ -41,7 +44,7 @@ export default function NewsCard({ item, onOpen, bookmarked, onToggleBookmark })
             </button>
           </div>
         </div>
-      )}
+      
 
       <div className="p-5 flex flex-col flex-1">
         {/* Header (Category + Date) */}
