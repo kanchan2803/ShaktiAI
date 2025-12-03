@@ -356,7 +356,7 @@ const Chatbot = () => {
         <button 
         className="bg-violet-600 hover:bg-violet-700 text-white rounded-full shadow-lg shadow-violet-200 
                 hover:shadow-lg hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 transition-all transform"
-        onClick={handleSend} 
+        onClick={()=>handleSend()} 
         disabled={isLoading}
         >
           <Send size={22} fill="currentColor" />

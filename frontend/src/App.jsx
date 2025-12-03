@@ -23,7 +23,6 @@ function App() {
         <Route path='/login' element= {<LoginPage/>} />
         <Route path='/signup' element= {<SignupPage />} />
         <Route path="/helplines" element={<HelplineNumbers />} />
-        <Route path="/legal-updates" element={<LegalUpdatesPage />} />
         <Route path="/HomePage" element={<HomePage />} />
         {/* private routes */}
         <Route element = {<ProtectedRoute />}>
@@ -32,6 +31,7 @@ function App() {
           <Route path='/chat/:chatId' element = { <Bot />} />
           <Route path="/add-update" element={<AddUpdatePage />} />
           <Route path="/safe-space-locator" element={<SafeSpaceLocator />} />
+        <Route path="/legal-updates" element={<LegalUpdatesPage />} />
         </Route>
       </Routes>
     </>

@@ -146,7 +146,7 @@ export default function Navbar() {
                 {/* --- Mobile-only Navigation Links --- */}
                 <div className="md:hidden border-b border-gray-700 mb-2 pb-2">
                   <NavLink to="/" end className={mobileLinkClasses} onClick={() => setMenuOpen(false)}>Home</NavLink>
-                  <NavLink to="/history" className={mobileLinkClasses} onClick={() => setMenuOpen(false)}>History</NavLink>
+                  <NavLink to="/helplines" end className={mobileLinkClasses} onClick={() => setMenuOpen(false)}>Helplines</NavLink>
                 </div>
 
                 <div className="flex flex-col gap-2">
