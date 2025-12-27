@@ -335,8 +335,11 @@ const Chatbot = () => {
             {/* Actions */}
         <div className="flex items-center gap-2 pb-1">
         <button
+
           onClick={() => {
+            console.log("Mic clicked. Currently listening:", listening);
             if (listening) {
+              
                   SpeechRecognition.stopListening();
                 } else {
                   resetTranscript();
