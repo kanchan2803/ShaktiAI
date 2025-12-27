@@ -30,8 +30,16 @@ const Chatbot = () => {
   const { 
     transcript, 
     listening, 
-    resetTranscript, browserSupportsSpeechRecognition 
+    resetTranscript, 
+    browserSupportsSpeechRecognition ,
+    error
   } = useSpeechRecognition();
+
+  useEffect(() => {
+  if (error) {
+    console.error("Speech Recognition Error:", error);
+  }
+}, [error]);
 
   const chatEndRef = useRef(null);
   const { chatId: urlChatId } = useParams();
