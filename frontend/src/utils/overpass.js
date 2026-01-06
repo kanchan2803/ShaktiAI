@@ -1,4 +1,4 @@
-export async function fetchNearby(lat, lon, radius=8000) {
+export async function fetchNearby(lat, lon, radius=3000) {
   const endpoint = 'https://overpass-api.de/api/interpreter';
   const query = `
   [out:json][timeout:25];
