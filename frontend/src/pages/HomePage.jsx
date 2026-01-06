@@ -40,13 +40,13 @@ const features = [
     link: "/safe-space-locator",
     color: "from-blue-500 to-cyan-500",
   },
-  {
-    icon: FileText,
-    title: "Legal Drafts",
-    text: "Verified ready-to-use templates — FIRs, affidavits, and official complaint formats.",
-    link: "/drafts",
-    color: "from-purple-500 to-indigo-500",
-  },
+  // {
+  //   icon: FileText,
+  //   title: "Legal Drafts",
+  //   text: "Verified ready-to-use templates — FIRs, affidavits, and official complaint formats.",
+  //   link: "/drafts",
+  //   color: "from-purple-500 to-indigo-500",
+  // },
   {
     icon: Newspaper,
     title: "Legal Updates",
@@ -61,13 +61,13 @@ const features = [
     link: "/helplines",
     color: "from-green-500 to-emerald-600",
   },
-  {
-    icon: HelpCircle,
-    title: "Guides & Awareness",
-    text: "Simple how-to guides and rights awareness posts to keep you informed.",
-    link: "/guides", // or wherever you route this
-    color: "from-teal-400 to-teal-600",
-  },
+  // {
+  //   icon: HelpCircle,
+  //   title: "Guides & Awareness",
+  //   text: "Simple how-to guides and rights awareness posts to keep you informed.",
+  //   link: "/guides", // or wherever you route this
+  //   color: "from-teal-400 to-teal-600",
+  // },
 ];
 
 // --- Data: Core Values (From About Page) ---
@@ -82,11 +82,11 @@ const values = [
     desc: "Quick access to helplines, safe spaces, and verified contacts.",
     icon: Shield,
   },
-  {
-    title: "Community Connection",
-    desc: "Connects women to mentors, lawyers, and local NGOs securely.",
-    icon: Users,
-  },
+  // {
+  //   title: "Community Connection",
+  //   desc: "Connects women to mentors, lawyers, and local NGOs securely.",
+  //   icon: Users,
+  // },
 ];
 
 // --- Data: Team (From About Page) ---
