@@ -1,6 +1,6 @@
 # ⚖️ Shakti AI — Your Legal Companion & Safety Guardian
 
-![Shakti AI Banner](https://via.placeholder.com/1000x300?text=Shakti+AI+|+Empowering+Women+Through+Law+&+Technology) 
+![Shakti AI Banner](image.png)
 
 **Shakti AI** is a comprehensive legal assistant and safety platform designed to empower women in India. By combining **Generative AI** with real-time location services, it demystifies complex Indian laws (BNS, 2023) and provides immediate access to emergency resources.
 
