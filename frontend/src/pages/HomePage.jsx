@@ -342,7 +342,7 @@ export default function HomePage() {
           <div className="flex flex-col gap-2 text-sm">
             <h4 className="font-semibold text-white mb-2">Contact</h4>
             <a href="mailto:support@shakti.ai" className="hover:text-indigo-400 transition">support@shakti.ai</a>
-            <a href="tel:+911123456789" className="hover:text-indigo-400 transition">+91 11 2345 6789</a>
+            <a href="tel:+911123456789" className="hover:text-indigo-400 transition">+91 2345 XXXX</a>
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-6 md:px-12 mt-12 pt-8 border-t border-slate-800 text-center text-xs text-slate-500">
