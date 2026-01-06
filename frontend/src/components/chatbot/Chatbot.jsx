@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { fetchChatMessages, sendMessageToBot } from "../../services/chatApi";
-import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
+// import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
 import { useNavigate, useParams } from "react-router-dom";
 import Loader from "../layouts/Loader";
 import { Send, Mic, StopCircle, Sparkles, Bot, User, ArrowLeft, RefreshCw, Shield, Scale } from "lucide-react";
@@ -26,20 +26,77 @@ const Chatbot = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(false);
   const { user } = useAuth();
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef(null);
 
-  const { 
-    transcript, 
-    listening, 
-    resetTranscript, 
-    browserSupportsSpeechRecognition ,
-    error
-  } = useSpeechRecognition();
+  const startListening = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert("Voice input is not supported in this browser. Please use Chrome or Edge.");
+      return;
+    }
 
-  useEffect(() => {
-  if (error) {
-    console.error("Speech Recognition Error:", error);
-  }
-}, [error]);
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    
+    recognition.lang = 'en-IN'; // Indian English
+    recognition.continuous = true; // Keep listening until stopped
+    recognition.interimResults = true; // Show text while speaking
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error", event.error);
+      setIsListening(false);
+    };
+
+    recognition.onresult = (event) => {
+      // Combine all pieces of text (results) into one string
+      const transcript = Array.from(event.results)
+        .map(result => result[0].transcript)
+        .join('');
+      setInput(transcript);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    setIsListening(false);
+  };
+
+  const handleMicClick = () => {
+    if (isListening) {
+      stopListening();
+    } else {
+      setInput(""); // Clear input when starting new recording
+      startListening();
+    }
+  };
+
+  // const { 
+  //   transcript, 
+  //   listening, 
+  //   resetTranscript, 
+  //   browserSupportsSpeechRecognition ,
+  //   error
+  // } = useSpeechRecognition();
+
+  // useEffect(() => {
+  // if (error) {
+  //   console.error("Speech Recognition Error:", error);
+  // }
+// }, [error]);
 
   const chatEndRef = useRef(null);
   const { chatId: urlChatId } = useParams();
@@ -87,43 +144,31 @@ const Chatbot = () => {
     }
   }, [urlChatId]);
 
-  // Sync speech transcript to input
-  useEffect(() => {
-    if (listening) {
-      setInput(transcript);
-    }
-  }, [transcript, listening]);
+  // // Sync speech transcript to input
+  // useEffect(() => {
+  //   if (listening) {
+  //     setInput(transcript);
+  //   }
+  // }, [transcript, listening]);
 
-  if (!browserSupportsSpeechRecognition) {
-    return(
-      <div className="flex items-center justify-center h-screen bg-rose-50 text-gray-600">
-        <p>Your browser does not support speech recognition.</p>
-      </div>
-    )
-  }
+  // if (!browserSupportsSpeechRecognition) {
+  //   return(
+  //     <div className="flex items-center justify-center h-screen bg-rose-50 text-gray-600">
+  //       <p>Your browser does not support speech recognition.</p>
+  //     </div>
+  //   )
+  // }
 
   const handleSend = async (textOverride = null) => {
-    const message = textOverride || input.trim() || transcript.trim();
+    const message = textOverride || input.trim() ;
     if (!message) return;
+
+    if (isListening) stopListening();
 
     const userMsg = { role: "user", content: message };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
-    resetTranscript();
     setIsLoading(true);
-/*
-    const {reply: botReply, chatId : newChatId} = await sendMessageToBot(message, chatId);
-    const botMsg = { role: "model", content: botReply };
-
-    setMessages((prev) => [...prev, botMsg]);
-    
-    if (newChatId) {
-        setChatId(newChatId);
-        if(!chatId){
-          navigate(`/chat/${newChatId}`);
-        }
-    }
-    setIsLoading(false); */
 
     try {
       // 2. API Call (Matches your backend: expects { message, chatId })
@@ -328,7 +373,7 @@ const Chatbot = () => {
         /> */}
         <textarea
               rows={1}
-              placeholder={listening ? "Listening... Speak now" : "Ask Shakti anything regarding laws..."}
+              placeholder={isListening ? "Listening... Speak now" : "Ask Shakti anything regarding laws..."}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
@@ -343,25 +388,15 @@ const Chatbot = () => {
             {/* Actions */}
         <div className="flex items-center gap-2 pb-1">
         <button
-
-          onClick={() => {
-            console.log("Mic clicked. Currently listening:", listening);
-            if (listening) {
-              
-                  SpeechRecognition.stopListening();
-                } else {
-                  resetTranscript();
-                  SpeechRecognition.startListening({ continuous: true, language: "en-IN" });
-                }
-          }}
+          onClick={handleMicClick}
           className={`p-2.5 rounded-full transition-all ${
-                  listening 
+                    isListening 
                     ? "bg-red-100 text-red-600 animate-pulse" 
                     : "hover:bg-slate-200 text-slate-500 hover:text-slate-700"
                 }`}
-              title={listening ? "Stop Listening" : "Speak"}
+              title={isListening ? "Stop Listening" : "Speak"}
         >
-        {listening ? <StopCircle size={20} /> : <Mic size={20} />}
+        {isListening ? <StopCircle size={20} /> : <Mic size={20} />}
         </button>
 
         <button 
